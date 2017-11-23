@@ -229,12 +229,25 @@ module Soracom
       result
     end
 
-    # SIMの所属Groupを指定あるいは上書き変更
+    # SIMのグループ変更
+    def update_subscriber_group(imsis, group_id)
+      imsis = [imsis] if imsis.class != Array
+      threads = [], result = []
+      imsis.map do |imsi|
+        threads << Thread.new do
+          result << { 'imsi' => imsi }.merge(set_group(imsi, group_id))
+        end
+      end
+      threads.each(&:join)
+      result
+    end
+
+    # SIMの所属グループを指定あるいは上書き変更
     def set_group(imsi, group_id)
       @api.post(path: "/subscribers/#{imsi}/set_group", payload: { groupId: group_id })
     end
 
-    # SIMの所属Groupを指定を解除
+    # SIMの所属グループを指定を解除
     def unset_group(imsi)
       @api.post(path: "/subscribers/#{imsi}/unset_group")
     end
