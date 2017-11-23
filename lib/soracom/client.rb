@@ -240,7 +240,7 @@ module Soracom
     end
 
     # SIMグループの一覧を取得
-    def list_groups(group_id)
+    def list_groups(group_id=nil)
       if group_id
         [ @api.get(path: "/groups/#{group_id}") ]
       else
