@@ -208,15 +208,21 @@ module Soracom
     end
 
     # SIMのプラン変更
+    # TODO スレッドの数とスリープ時間の調整
     def update_subscriber_speed_class(imsis, speed_class)
       imsis = [imsis] if imsis.class != Array
       threads = [], result = []
-      imsis.map do |imsi|
-        threads << Thread.new do
-          result << { 'imsi' => imsi }.merge(@api.post(path: "/subscribers/#{imsi}/update_speed_class", payload: { speedClass: speed_class }))
+      while !imsis.empty?
+        target_imsis = imsis.shift(50)
+        target_imsis.map do |imsi|
+          threads << Thread.new do
+            result << { 'imsi' => imsi }.merge(@api.post(path: "/subscribers/#{imsi}/update_speed_class", payload: { speedClass: speed_class }))
+          end
         end
+        threads.each(&:join)
+        puts imsis.size
+        sleep 3
       end
-      threads.each(&:join)
       result
     end
 
@@ -250,12 +256,17 @@ module Soracom
     def update_subscriber_group(imsis, group_id)
       imsis = [imsis] if imsis.class != Array
       threads = [], result = []
-      imsis.map do |imsi|
-        threads << Thread.new do
-          result << { 'imsi' => imsi }.merge(set_group(imsi, group_id))
+      while !imsis.empty?
+        target_imsis = imsis.shift(50)
+        target_imsis.map do |imsi|
+          threads << Thread.new do
+            result << { 'imsi' => imsi }.merge(set_group(imsi, group_id))
+          end
         end
+        threads.each(&:join)
+        puts imsis.size
+        sleep 3
       end
-      threads.each(&:join)
       result
     end
 
