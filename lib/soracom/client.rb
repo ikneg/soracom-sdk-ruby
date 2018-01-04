@@ -51,7 +51,24 @@ module Soracom
       end
     end
 
-    # 特定Operator下のSubscriber一覧を取
+    # 特定Operator下の全てのSubscriberを取得
+    # FIXME filter
+    def all_subscribers(operatorId:@auth[:operatorId])
+      limit = 300
+      result = []
+      res = @api.get(path: '/subscribers', params: { operatorId: operatorId, limit: limit }, need_res_header: true)
+      result += res[:sims]
+      loop do
+        break if !res[:headers]["x-soracom-next-key"]
+        last_evaluated_key = res[:headers]["x-soracom-next-key"]
+        params = { operatorId: operatorId, limit: limit, last_evaluated_key: last_evaluated_key}
+        res = @api.get(path: '/subscribers', params: params, need_res_header: true)
+        result += res[:sims]
+      end
+      return result
+    end
+
+    # 特定Operator下のSubscriber一覧を取得
     def list_subscribers(operatorId:@auth[:operatorId], limit:1024, filter:{})
       filter = Hash[filter.map { |k, v| [k.to_sym, v] }]
       if filter[:key].nil?

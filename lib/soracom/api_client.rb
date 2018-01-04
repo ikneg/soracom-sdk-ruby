@@ -8,9 +8,13 @@ module Soracom
       @endpoint = (endpoint.nil?) ? API_BASE_URL : endpoint
     end
 
-    def get(path:'', params:{})
+    def get(path:'', params:{}, need_res_header:false)
       res = RestClient.get @endpoint + path, accept: 'application/json', params: params, 'X-Soracom-API-Key' => @auth[:apiKey], 'X-Soracom-Token' => @auth[:token]
-      return parse(res.body) if res.body && res.body.length > 0
+      if need_res_header
+        return {sims: parse(res.body), headers: res.each_header.to_h} if res.body && res.body.length > 0
+      else
+        return parse(res.body) if res.body && res.body.length > 0
+      end
       return { result: (res.code =~ /2../) ? 'success' : 'failure' }
     rescue => evar
       @log.debug evar
